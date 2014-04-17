@@ -71,3 +71,41 @@ proportions <- function(x) {
   probs <- x / total;
   return(probs);
 }
+
+coinFlips1 <- function(numFlips = 10, numHeads = 1) {
+  numRuns <- 100000;
+  count <- 0;
+  for(i in 1:numRuns) {
+    if(sum(rbinom(numFlips, 1, .5)) == numHeads) {
+      count <- count + 1;
+    }
+  }
+  return(count/numRuns);
+}
+
+coinFlips <- function(numFlips=10, prob = .5) {
+  numRuns <- 100000;
+  counts <- rep(0, numFlips + 1);
+  #set.seed(2);
+  for(i in 1:numRuns) {
+    heads <- sum(rbinom(numFlips, 1, prob));
+    #print(heads);
+    counts[heads + 1] <- counts[heads + 1] + 1;
+    #The +1 offset (and length of numFlips + 1) is needed because there are numFlips + 1 combinations
+    #if numFlips = 10, the number of heads could be 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 or 10
+  }
+  return(counts);
+}
+
+randomWalkBinomial <- function(numSteps = 1000, prob = .5) {
+  steps <- rbinom(numSteps, 1, prob);
+  steps[steps == 0] <- -1;
+  plot(cumsum(steps), type="l", main="Random Walk with Binomial Distribution", xlab="step", ylab="distance traveled");
+  return(steps);
+}
+
+randomWalkNormal <- function(numSteps = 1000, sd = 1) {
+  steps <- rnorm(numSteps, 0, sd);
+  plot(cumsum(rnorm(steps, 0, sd)), type="l", main="Random Walk with Normal Distribution", xlab="step", ylab="distance travled")
+  return(steps);
+}
