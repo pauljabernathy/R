@@ -8,8 +8,6 @@ doSimulation <- function(initial = 16.66) {
   summaries <- data.frame(as.numeric(ss[1]), as.numeric(ss[2]), as.numeric(ss[3]), as.numeric(ss[4]), as.numeric(ss[5]), as.numeric(ss[6]));
   names(summaries) <- names(ss)
   
-  #hist(sim);
-  
   return(summaries)
 }
 final <- 0;
@@ -20,12 +18,13 @@ shinyServer(function(input, output) {
   snp <- snp[order(snp$Date),]  #reverse it because the file gives the latest days first
   oneday <- findDiffs(snp$Close);
   onedayr <- findDiffRatios(snp$Close);
+ #) )
   
   output$stockchart <- renderPlot({
     input$oneChartButton
     
-    initial = input$initial;
-    isolate(
+  initial = input$initial;
+  isolate(
       numbers <- initial * cumprod(sample(onedayr, length(onedayr), T))
     )
     isolate (
@@ -45,7 +44,7 @@ shinyServer(function(input, output) {
       paste("final value: ", final)
     )
   })
-  
+
   output$sim <- renderPrint({
     input$doSimButton
     isolate(
