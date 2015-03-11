@@ -1,0 +1,102 @@
+Generating a Sierpinski Triangle and a Sierpinski Carpet
+========================================================
+<script src="ga.js"></script>
+<h2>Sierpinki Triangle</h2>
+
+A <a href="http://en.wikipedia.org/wiki/Sierpinski_triangle">Sierpinski Triangle</a> is a fractal triangle that is produced by a very simple algorithm.
+
+- Draw three vertices
+
+- Randomly generate a point on the graph.
+
+- Randomly choose one of the three vertices
+
+- Go the point halfway between your random point and your random vertex and set this as your current location.
+
+- Choose another random vertex and go halfway between your previous current location and the new randomly chosen vertex.
+
+- Do this a large number of times, marking each point you land on, and the below triangle will begin to emege.
+
+The code used is
+```{r}
+sierpinskiTriangle = function(numPoints = 10000) {
+  currentX <- runif(1);
+  currentY <- runif(1);
+  
+  xCorners <- c(0, 1, .5);
+  yCorners <- c(0, 0, 3^.5 / 2);
+  
+  xPoints <- vector();
+  yPoints <- vector();
+  
+  xPoints <- c(xPoints, currentX);
+  yPoints <- c(yPoints, currentY);
+  
+  for(i in 1:numPoints) {
+    corner <- randomInt(3);
+    currentX <- (currentX + xCorners[corner]) / 2;
+    currentY <- (currentY + yCorners[corner]) / 2;
+    
+    xPoints <- c(xPoints, currentX);
+    yPoints <- c(yPoints, currentY);
+  }
+  plot(xPoints, yPoints, pch=20);
+}
+
+randomInt <- function(max) {
+  return(ceiling(runif(1) * max));
+}
+```
+
+If this is saved in a document called "fractal.r" in your working directory, just load it and run it as below:
+
+```{r}
+source('fractal.r');
+sierpinskiTriangle(50000);
+```
+
+If you see a few points that seem out of place, it is because you start with a random point and it may take a few iterations of the algorithm before it falls into the pattern.
+
+
+<h2>Sierpinski Carpet</h2>
+
+A <a href="http://en.wikipedia.org/wiki/Sierpinski_carpet">Sierpinski Carpet</a> has a similar look, but is a square instead of a triangle.  To make it, you start with a filled square and recursively remove the middle third.  That is, you remove the middle square and recursively remove the middle square of each of the surrounding eight blocks.
+
+The function I wrote is:
+```{r}
+sierpinskiCarpet <- function(depth = 4, shouldReturn = FALSE) {
+  if(depth < 1) {
+    stop("can't have a depth less than 1");
+  }
+  width = 3 ^ depth;
+  carpet <- matrix(1, nrow=width, ncol=width);
+  carpet[(width/3 + 1):(2 * width/3),(width/3 + 1):(2 * width/3)] <- 0;
+  if(depth > 1) {
+    for(i in 0:2) {
+      for(j in 0:2) {
+        if(i != 1 || j != 1) {
+        iStart <- 1 + (width / 3) * i;
+        iEnd <- iStart + width / 3 - 1;
+        jStart <- 1 + (width / 3) * j;
+        jEnd <- jStart + width / 3 - 1;
+        carpet[iStart:iEnd, jStart:jEnd] <- sierpinskiCarpet(depth - 1, TRUE);
+        }
+      }
+    }
+  }
+  if(shouldReturn) {
+    return(carpet);
+  } else {
+    image(carpet, col=c("white", "black"));
+  }
+}
+```
+
+Again, if this is in a file called "fractal.r", use the following two lines:
+
+```{r}
+source('fractal.r')
+sierpinskiCarpet(5, FALSE);
+```
+
+<object name="footer" type="text/html" data="footer.html"></object>
