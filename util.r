@@ -1,5 +1,6 @@
 
 DUMMY_PROBABILITY = .0001;
+EPSILON <- 0.000001;
 
 #TODO:  handle NAs
 factorHist = function(x) {
@@ -279,18 +280,16 @@ obsEntropy = function(dataVec) {
   values = levels(as.factor(dataVec));
   #TODO:  learn how to write your own objects so you can return something here from factorHist
   probs = vector();
-  #for(i in 1:length(values)) {
-  #  probs[i] = priorProb(dataVec, values[i]);
-  #  print(paste(values[i], probs[i], sep="  "));
-  #}
   probs <- sapply(1:length(values), function(j) { 
-    print(paste(values[j], priorProb(dataVec, values[j]), sep="  "));
     priorProb(dataVec, values[j]);
-    });
+  });
   return(entropy(probs));
 }
 
 entropy = function(probs) {
+  if((sum(probs) - EPSILON > 1.0) | (sum(probs) + EPSILON < 1.0)) {
+    stop("the probabilities must sum to 1")
+  }
   return(-sum(probs * log2(probs)));
 }
 
