@@ -64,63 +64,9 @@ indexOf = function(x, s) {
   }
   return(-1);
 }
-
+#TODO:  change name
 #See also the table function.  This function gives frequencies/probabilities, which table does not do, and prints the data differently.
 breakdown = function(x, y) {
-  #if(class(x) != 'numeric' | class(y) != 'numeric') {
-  #  return(-1);
-  #}
-  if(length(x) != length(y)) {
-    return(-1);
-  }
-  
-  xValues = levels(as.factor(x));
-  if(sum(is.na(x) > 0)) {
-    xValues = c(xValues, NA)
-  }
-  
-  yValues = levels(as.factor(y));
-  if(sum(is.na(y)) > 0) {
-    yValues = c(yValues, NA);
-  }
-  #print(xValues);
-  #print(yValues);
-  #output = data.frame(ncol=4);
-  #names(output) = c("x", "y", "p(x | y)", "p(y | x)");
-  #output = data.frame(c("x", "y", "p(x | y)", "p(y | x)"));
-  #print(paste(paste(paste("x", "y", sep = " "), "P(x | y)", sep=", "), "p(y | x)", sep=", "));
-  xNames = vector();
-  yNames = vector();
-  counts = vector();
-  xGivenY = vector();
-  yGivenX = vector();
-  for(i in 1:length(xValues)) {
-    for(j in 1:length(yValues)) {
-      xGivenY = c(xGivenY, condProb(x, xValues[i], y, yValues[j]));
-      yGivenX = c(yGivenX, condProb(y, yValues[j], x, xValues[i]));
-      counts = c(counts, sum((x == xValues[i]) & (y == yValues[j])));
-      #print(paste(paste(paste(xValues[i], yValues[j], sep = " "), xGivenY, sep=", "), yGivenX, sep=", "));
-      #xNames[i + j - 1] = xValues[i];
-      #yNames[i + j - 1] = yValues[j];
-      #TODO:  figure out why above two lines don't work
-      xNames = c(xNames, xValues[i]);
-      yNames = c(yNames, yValues[j]);
-      #print(paste(xNames[i + j - 1], yNames[i + j - 1], xGivenY[i + j - 1], yGivenX[i + j - 1], sep = " "));
-    }
-  }
-  #print(xNames);
-  #print(yNames);
-  #print(xGivenY);
-  #print(yGivenX);
-  output = data.frame(xNames, yNames, counts, xGivenY, yGivenX);
-  #names(output) = c("x", "y", "p(x | y)", "p(y | x)");
-  #print(output);
-  #print("___");
-  #doubleHist(x, y);
-  return(output)
-}
-
-breakdown2 = function(x, y) {
   t1 = table(x, y, useNA="ifany");
   t2 = table(y, x, useNA="ifany")
   rownames(t1) = replace(rownames(t1), is.na(rownames(t1)), "NA or unknown");
@@ -128,11 +74,8 @@ breakdown2 = function(x, y) {
   rownames(t2) = replace(rownames(t2), is.na(rownames(t2)), "NA or unknown");
   colnames(t2) = replace(colnames(t2), is.na(colnames(t2)), "NA or unknown");
   
-  print(colnames(t1));
-  print(colnames(t2));
-  
-  barplot(t1, legend=rownames(t1));
-  barplot(t2, legend=rownames(t2))
+  #barplot(t1, legend=rownames(t1));
+  #barplot(t2, legend=rownames(t2))
   #print(t);
   numRows = length(row.names(t1));
   numCols = length(t1) / numRows;
@@ -141,8 +84,8 @@ breakdown2 = function(x, y) {
   tf = tf[order(tf$x),];
   names(tf) = c("x", "y", "counts");
   #print(tf);
-  xGivenY = tf$counts[which(tf$x == tf$x && tf$y == tf$y)] / sum(tf$counts[which(tf$y == tf$y)]);
-  xGivenY = sapply(tf$counts, function(i) { i  });
+  #xGivenY = tf$counts[which(tf$x == tf$x && tf$y == tf$y)] / sum(tf$counts[which(tf$y == tf$y)]);
+  #xGivenY = sapply(tf$counts, function(i) { i  });
   xGivenY = apply(tf, 1, function(i) { total <- sum(tf$counts[which(tf$y == i[2])]);
                                        prob <- as.numeric(i[3]) / total; 
                                        return(prob);
@@ -152,19 +95,49 @@ breakdown2 = function(x, y) {
                                        as.numeric(i[3]) / total });
   tf <- cbind(tf, xGivenY);
   tf <- cbind(tf, yGivenX);
-  print(tf);
-  print(sum(counts))
-  
+  #print(tf);
+  #print(sum(tf$counts));
+  barplot(t1, legend=rownames(t1));
+  barplot(t2, legend=rownames(t2));
+  return(tf);
 }
 
-#containsOld = function(x, s) {
-#  for(i in 1:length(x)) {
-#    if(x[i] == s) {
-#      return(TRUE);
-#    }
-#  }
-#  return(FALSE);
-#}
+#gives what the joint distribution would be if the two variables were indep
+jointDistIfIndep <- function(x, y) {
+  xHist <- factorHist(x);
+  yHist <- factorHist(y);
+  #print(xHist);
+  #print(yHist);
+  names <- vector();
+  counts <- vector();
+  for(i in 1:length(xHist$item)) {
+    #print(as.character(xHist$item[i]));
+    for(j in 1:length(yHist$item)) {
+      
+      #print(as.character(yHist$item[j]));
+      names <- c(names, paste(as.character(xHist$item[i]), as.character(yHist$item[j]), sep=" "));
+      #names <- c(names, "x");
+      counts <- c(counts, xHist$percents[i] * yHist$counts[j]);
+    }
+  }
+  #print(names);
+  probs <- counts / sum(counts);
+  result <- data.frame(names, counts, probs);
+  return(result);
+}
+
+chiSquare <- function(observed, expected) {
+  #TODO:  check that both are of the same length and are both numeric
+  cs <- (observed - expected)^2/expected;
+  print(pchisq(sum(cs), df=(length(expected) - 1), lower.tail=F));
+}
+
+#uses chi square to estimate if the two variables are independent by printing the p value from the chi square distribution
+#uses the breakdown function, so requires "paired" values of x and y in that x[i] and y[i] should be variables of the same observation (ex. in the same row of a table)
+#inupt is individual data points, not summations
+chiSquareIndepTest <- function(x, y) {
+  chiSquare(breakdown(x, y)$counts, jointDistIfIndep(x, y)$counts);
+}
 
 contains = function(x, s) {
   if(length(x[which(!is.na(x))]) < length(x) & is.na(s)) {
@@ -304,6 +277,22 @@ confInt <- function(percent, mean, sd, sampleSize = 1) {
   print(paste(qnorm(lower, mean, sd), qnorm(upper, mean, sd)));
 }
 
+confIntProportion <- function(percent, p, sampleSize) {
+  if(p < 0 | p > 1) {
+    stop("proportion must be between 0 and 1");
+  }
+  if(p * sampleSize < 10 | (1 - p) * sampleSize < 10) {
+    stop("need 10 or more expected successes and failures");
+  }
+  stderr <- sqrt(p * (1 - p) / sampleSize);
+  confInt(percent, p, stderr);
+}
+
+confIntDiffProps <- function(percent, p1, p2, n1, n2) {
+  stderr <- sqrt(p1*(1 - p1)/n1 + p2*(1 - p2)/n2)
+  confInt(percent, p1 - p2, stderr);
+}
+
 power <- function(percent, obsMean, obsSD, popMean, popSD, sampleSize = 1) {
   obsSD <- obsSD / sampleSize ^ .5;
   #print(obsSD);
@@ -324,4 +313,44 @@ power <- function(percent, obsMean, obsSD, popMean, popSD, sampleSize = 1) {
 
 echo <- function(x) {
   x
+}
+
+pOfB1 <- function(x, y) {
+  beta1 <- cor(y, x) * sd(y) / sd(x)
+  beta0 <- mean(y) - beta1 * mean(x)
+  e <- y - beta0 - beta1 * x
+  sigma <- sqrt(sum(e^2) / (n-2)) 
+  ssx <- sum((x - mean(x))^2)
+  seBeta0 <- (1 / n + mean(x) ^ 2 / ssx) ^ .5 * sigma 
+  seBeta1 <- sigma / sqrt(ssx)
+  tBeta0 <- beta0 / seBeta0; 
+  tBeta1 <- beta1 / seBeta1
+  pBeta0 <- 2 * pt(abs(tBeta0), df = n - 2, lower.tail = FALSE)
+  pBeta1 <- 2 * pt(abs(tBeta1), df = n - 2, lower.tail = FALSE)
+  pprint(2 * pt(abs(tBeta1), df = n - 2, lower.tail = FALSE))
+  coefTable <- rbind(c(beta0, seBeta0, tBeta0, pBeta0), c(beta1, seBeta1, tBeta1, pBeta1))
+  colnames(coefTable) <- c("Estimate", "Std. Error", "t value", "P(>|t|)")
+  rownames(coefTable) <- c("(Intercept)", "x")
+  coefTable
+}
+
+#probability of a loaded coin, given n heads in a row
+pFairGivenNHeads <- function(n, priorPFair=.99, phGivenl = .6) {
+  phGivenf <- .5;
+  
+  pFairGivenNh <- (phGivenf ^ n * priorPFair) / (phGivenf ^ n * priorPFair + phGivenl ^ n * (1 - priorPFair));
+  return(pFairGivenNh);
+}
+
+#tosses should be a binary vector
+pFair <- function(tosses, priorPFair=.99, phGivenL = .6) {
+  n <- length(tosses);
+  h <- sum(tosses);
+  t <- n - h;
+  numCombos <- choose(n, h);
+  pTossesGivenFair <- numCombos * .5^n;
+  pTossesGivenLoaded <- numCombos * phGivenL ^ h * (1 - phGivenL)^t;
+  
+  pFairGivenTosses <- pTossesGivenFair * priorPFair / (pTossesGivenFair * priorPFair + pTossesGivenLoaded * (1-priorPFair));
+  return(pFairGivenTosses);
 }
