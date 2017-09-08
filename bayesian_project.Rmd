@@ -1,0 +1,93 @@
+---
+title: "Bayesian modeling and prediction for movies"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(statsr)
+library(BAS)
+```
+
+### Load data
+
+```{r}
+
+
+```{r load-data}
+load('movies.Rdata');
+
+
+```
+
+
+
+* * *
+
+## Part 1: Data
+
+The data set used here consists of 651 movies released before 2016, with 32 variables reported for each observation.  Random sampling was used, so system bias should not be considered a factor.  The only reservation one might have is whether or not this data set is large enough.  In many contexts, 651 observations might be considered large, but given the large number of movies that have been released and the number of variables being tracked, it would be more accurate to use an exhaustive data set of all movies, if one could be found.  However, for the purposes of this paper, we will consider 651 observations enough for a reasonable approximation.
+
+* * *
+
+## Part 2: Data manipulation
+First, we will add some additional variables, which are derived from existing variables.  While they do not actually add any new information, they may speed up the analysis.  We are interested in whether or not a movie is considered a feature film and in the "Drama" genre.  We also want to know whether or not it is rated R, if it was released during the Oscar season (here defined to be October, November, and Decemter), and if it was released during the summer season, which we define here to be May through August.
+
+
+```{r}
+movies = mutate(movies, feature_film = ifelse(title_type=='Feature Film', 'yes', 'no'));
+movies = mutate(movies, drama = ifelse(genre=='Drama', 'yes', 'no'));
+movies = mutate(movies, mpaa_rating_R = ifelse(mpaa_rating =='R', 'yes', 'no'));
+movies = mutate(movies, oscar_season = ifelse(thtr_rel_month > 9, 'yes', 'no'))
+is_summer_month <- function(thtr_rel_month) {
+  if(thtr_rel_month > 4 && thtr_rel_month < 9) { 
+    return('yes');
+  } else { 
+    return('no');
+  }
+  #return(thtr_rel_month < 9 && thtr_rel_month > 4);
+  #return(ifelse(thtr_rel_month < 9 && thtr_rel_month > 4), 'yes', 'no');  the ifelse statement does not like this
+}
+movies = mutate(movies, summer_season = sapply(movies$thtr_rel_month, is_summer_month))
+#movies = mutate(movies, summer_season = ifelse(is_summer_month(thtr_rel_month), 'yes', 'no'));  This produces all nos
+select(movies, title_type, feature_film, genre, drama, mpaa_rating, mpaa_rating_R, thtr_rel_month, oscar_season, summer_season);
+select(movies, thtr_rel_month, oscar_season, summer_season);
+```
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
+button above. Make sure that your code is visible in the project you submit. 
+Delete this note when before you submit your work.
+
+* * *
+
+## Part 4: Modeling
+
+NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
+button above. Make sure that your code is visible in the project you submit. 
+Delete this note when before you submit your work.
+
+* * *
+
+## Part 5: Prediction
+
+NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
+button above. Make sure that your code is visible in the project you submit. 
+Delete this note when before you submit your work.
+
+* * *
+
+## Part 6: Conclusion
+
