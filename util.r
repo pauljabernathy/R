@@ -103,6 +103,17 @@ breakdown = function(x, y) {
   return(tf);
 }
 
+summary2 <- function(x) {
+  print(summary(x));
+  print(paste("sd: ", sd(x)));
+  #print(paste("entropy: ", obsEntropy(x)));
+  if(is.numeric(x)) {
+    hist(x);
+  } else if(is.factor(x)) {
+    factorHist(x);
+  }
+}
+
 #gives what the joint distribution would be if the two variables were indep
 jointDistIfIndep <- function(x, y) {
   xHist <- factorHist(x);
@@ -248,6 +259,24 @@ conditionalProbDF = function(data, col, value, givenCol, givenValue) {
   }
 }
 
+fractionNA <- function(x) {
+  sum(is.na(x)) / length(x);
+}
+
+fractionBlank <- function(x) {
+  sum(x == "") / length(x);
+}
+
+fractionEmpty <- function(x) {
+  empty <- sum(is.na(x));
+  #print(empty);
+  empty <- empty + sum(x == "", na.rm=TRUE);
+  #print(empty);
+  empty / length(x);
+  #fraction <- empty / length(x);
+  #print(fraction);
+  #return(fraction);
+}
 
 obsEntropy = function(dataVec) {
   values = levels(as.factor(dataVec));
@@ -333,6 +362,11 @@ pOfB1 <- function(x, y) {
   coefTable
 }
 
+#TODO: error checking
+pNumHeads <- function(numHeads, numTosses, pHeads) {
+  choose(numTosses, numHeads) * pHeads^numHeads *  (1 - pHeads)^(numTosses - numHeads);
+}
+
 #probability of a loaded coin, given n heads in a row
 pFairGivenNHeads <- function(n, priorPFair=.99, phGivenl = .6) {
   phGivenf <- .5;
@@ -352,4 +386,65 @@ pFair <- function(tosses, priorPFair=.99, phGivenL = .6) {
   
   pFairGivenTosses <- pTossesGivenFair * priorPFair / (pTossesGivenFair * priorPFair + pTossesGivenLoaded * (1-priorPFair));
   return(pFairGivenTosses);
+}
+
+#b is branching factor
+treeSize <- function(b, depth) {
+  level <- 0:depth;
+  #i <- 0;
+  #s <- sapply(n, function(n) { i <- i + 1;print(i); b ^ i; });
+  level_size <- vector();
+  for(i in 0:depth) {
+    level_size <- c(level_size, b ^ i);
+  }
+#   total <- sapply(s, function(s) { 
+#     if(i == 1) { 
+#       total[i] <- s[i];
+#     } else {
+#       total[i] <- total[i - 1] + s[i]};
+#     })
+  #total <- vector();
+  total = level_size[1];
+  #total <- c(level_size[1], level_size[1] + level_size[2]);
+  for(i in 2:(depth + 1)) {
+    total <- c(total, total[i - 1] + level_size[i]);
+  }
+  result <- data.frame(level, level_size, total);
+  return(result);
+}
+
+coinTossBatches <- function(pHeads, numTosses, numBatches) {
+  numHeads <- vector();
+  for(i in 1:numBatches) {
+    numHeads <- c(numHeads, sum(rbinom(numTosses, 1, pHeads)));
+  }
+  #sum(numHeads == targetNumHeads) / numTosses;
+  numHeads;
+}
+
+coinTossBatchesSim <- function(pHeads, nTosses, numBatches) {
+  total <- 0;
+  results <- vector();
+  for(i in 0:nTosses) {
+    current <- sum(coinTossBatches(pHeads, nTosses, numBatches) == i)/numBatches;
+    results <- c(results, current);
+    #total <- total + current;
+    #print(current);
+  }
+  #print(total);
+  results;
+}
+
+pXGivenTheta <- function(numHeads, numTosses) {
+  h <- numHeads;
+  n <- numTosses;
+  choose(n, h) * (1 / factorial(h + 1) - 1 / factorial(n + 1));
+}
+
+chooseSteps <- function(size = 10, returnList = FALSE) {
+  result <- choose(size, 0:size);
+  plot(0:size, result, type="l");
+  if(returnList) {
+    return(result);
+  }
 }

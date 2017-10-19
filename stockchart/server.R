@@ -22,14 +22,16 @@ shinyServer(function(input, output) {
   
   output$stockchart <- renderPlot({
     input$oneChartButton
-    
-  initial = input$initial;
-  isolate(
+    isolate(
+      initial <- input$initial #if you have '=' instead of '<-' you get error warnings saying "unused argument (initial = input$initial)"
+    )
+    isolate(
       numbers <- initial * cumprod(sample(onedayr, length(onedayr), T))
     )
+    input$oneChartButton
     isolate (
-      plot(numbers, type="l", main="randomly generated plot of S&P 500 from Jan. 3, 1950 to April 11, 2014 by percent", 
-         ylab="S & P 500", xlab="days after Jan. 1, 1950")
+      plot(numbers, type="l", main="randomly generated plot based on historical prices of the S&P 500 from Jan. of 1950 to April of 2014", 
+         ylab="S & P 500", xlab="days after Jan. 3, 1950")
     )
     isolate (
       #if you have the <<- here, it allows you to define final outside of the functions for output$stockchart or output$amount, so they can both use the same array and you can display the amount beneath the chart

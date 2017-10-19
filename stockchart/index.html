@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Project 1</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Project 1">
+  <meta name="author" content="Paul Abernathy">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/highlight.js/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+    <h1>Project 1</h1>
+    <h2>for Developing Data Products</h2>
+    <p>Paul Abernathy<br/>good question</p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <hgroup>
+    <h1>Concept - Creat a stock price chart with a Random Walk.</h1>
+  </hgroup>
+  <article data-timings="">
+    <p>It has been argued that there is a lot of randomness in the stock market.  For example, a random graph that looks similar to a Wall Street chart can be made in R with one line:</p>
+
+<pre><code class="r">par(mfrow = c(2, 1))
+plot(cumsum(rnorm(1000)), type = &quot;l&quot;, main = &quot;moving average of company X&quot;, 
+    ylab = &quot;price&quot;, xlab = &quot;time&quot;)
+</code></pre>
+
+<p><img src="figure/unnamed-chunk-1.png" alt="plot of chunk unnamed-chunk-1"> </p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-2" style="background:;">
+  <hgroup>
+    <h1>A random walk, using historical changes for the probability distribution</h1>
+  </hgroup>
+  <article data-timings="">
+    <p>Of course, a cumulative sum of a normal distribution seems like a poor substitute for a true stock market graph.  Let&#39;s use historical data from the S &amp; P 500 index.</p>
+
+<p>Here is the method:</p>
+
+<ol>
+<li>Download <a href="http://finance.yahoo.com/q/hp?s=%5EGSPC&a=00&b=1&c=1950&d=04&e=22&f=2014&g=d">historical data</a> of <a href="http://en.wikipedia.org/wiki/S_%26_P_500">the S &amp; P 500</a> going back to January of 1950.  The data set used in this example goes from Jan. 3, 1950 (when it closed at 16.66) to April 11, 2014 (when it closed at 1815.69).</li>
+<li>  View <a href="http://finance.yahoo.com/echarts?s=%5EGSPC+Interactive#symbol=%5EGSPC;range=my">the graph of the historical data</a> for reference</li>
+<li>  Determine the percentage change for each day.</li>
+<li>  Randomly sample from those differences.</li>
+<li>  Create a graph (shown on next slide)</li>
+<li>  Randomly sample many times, as if you were running alternative histories of what might have been, and look at the distribution of the results (on page 5).
+</ol>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-3" style="background:;">
+  <hgroup>
+    <h1>A random graph, created by random sampling from the historical daily changes of the S &amp; P 500</h1>
+  </hgroup>
+  <article data-timings="">
+    <p><img src="figure/unnamed-chunk-2.png" alt="plot of chunk unnamed-chunk-2"> </p>
+
+<pre><code>## [1] &quot;ending value: 1331.41060298037&quot;
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-4" style="background:;">
+  <hgroup>
+    <h1>Monte Carlo Simulation of many &quot;alternative histories&quot;</h1>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r">alternatives &lt;- doSNPReturnSimulation(numRuns = 1000, initial = 16.66)
+summary(alternatives)
+</code></pre>
+
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##      24     880    1950    4180    4660   74600
+</code></pre>
+
+<p>Note how the median compares to the actual final value of 1815.69.  Below is the histogram of the results.  Note the distribution&#39;s long tail.</p>
+
+<pre><code class="r">par(mfrow = c(2, 1))
+hist(alternatives, breaks = seq(0, max(alternatives), by = max(alternatives)/100))
+</code></pre>
+
+<p><img src="figure/unnamed-chunk-4.png" alt="plot of chunk unnamed-chunk-4"> </p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='Concept - Creat a stock price chart with a Random Walk.'>
+         1
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='A random walk, using historical changes for the probability distribution'>
+         2
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title='A random graph, created by random sampling from the historical daily changes of the S &amp; P 500'>
+         3
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='Monte Carlo Simulation of many &quot;alternative histories&quot;'>
+         4
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- MathJax: Fall back to local if CDN offline but local image fonts are not supported (saves >100MB) -->
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        processEscapes: true
+      }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  <!-- <script src="https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+  </script> -->
+  <script>window.MathJax || document.write('<script type="text/x-mathjax-config">MathJax.Hub.Config({"HTML-CSS":{imageFont:null}});<\/script><script src="libraries/widgets/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"><\/script>')
+</script>
+<!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="libraries/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>

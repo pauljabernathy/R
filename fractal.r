@@ -45,6 +45,6 @@ sierpinskiCarpet <- function(depth = 4, shouldReturn = FALSE) {
   if(shouldReturn) {
     return(carpet);
   } else {
-    image(carpet, col=c("white", "black"));
+    image(carpet, col=c("white", "blue"));
   }
 }
