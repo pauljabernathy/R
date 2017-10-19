@@ -42,7 +42,6 @@ The data set used here consists of 651 movies released before 2016, with 32 vari
 ## Part 2: Data manipulation
 First, we will add some additional variables, which are derived from existing variables.  While they do not actually add any new information, they may speed up the analysis.  We are interested in whether or not a movie is considered a feature film and in the "Drama" genre.  We also want to know whether or not it is rated R, if it was released during the Oscar season (here defined to be October, November, and Decemter), and if it was released during the summer season, which we define here to be May through August.
 
-
 ```{r}
 movies = mutate(movies, feature_film = ifelse(title_type=='Feature Film', 'yes', 'no'));
 movies = mutate(movies, drama = ifelse(genre=='Drama', 'yes', 'no'));
@@ -61,33 +60,223 @@ movies = mutate(movies, summer_season = sapply(movies$thtr_rel_month, is_summer_
 #movies = mutate(movies, summer_season = ifelse(is_summer_month(thtr_rel_month), 'yes', 'no'));  This produces all nos
 select(movies, title_type, feature_film, genre, drama, mpaa_rating, mpaa_rating_R, thtr_rel_month, oscar_season, summer_season);
 select(movies, thtr_rel_month, oscar_season, summer_season);
+attach(movies);
 ```
+
+
 
 * * *
 
 ## Part 3: Exploratory data analysis
 
-NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
-button above. Make sure that your code is visible in the project you submit. 
-Delete this note when before you submit your work.
+```{r}
+
+```
+
+feature film
+```{r}
+boxplot(audience_score ~ feature_film)
+```
+Looks like this one matters.  Could also look at difference of two means.
+
+runtime
+```{r}
+plot(audience_score ~ runtime)
+```
+low probability
+
+rating
+```{r}
+boxplot(audience_score ~ mpaa_rating)
+
+```
+Maybe.  could do some categorical analysis.
+
+year
+```{r}
+plot(audience_score ~ thtr_rel_year)
+```
+
+month
+```{r}
+hist(thtr_rel_month)
+#factorHist(thtr_rel_month)
+table(thtr_rel_month)
+library(sqldf);
+sqldf("select thtr_rel_month as month, count(thtr_rel_month) as count from movies group by thtr_rel_month order by thtr_rel_month")
+
+
+plot(thtr_rel_month, audience_score)
+cor(thtr_rel_month, audience_score)
+boxplot(audience_score ~ thtr_rel_month)
+```
+So from this, there does not seem to be much correlation between month and audience score.
+
+
+oscar
+```{r}
+boxplot(audience_score ~ oscar_season)
+
+```
+
+summer
+```{r}
+boxplot(audience_score ~ summer_season)
+```
+
+imbd rating
+```{r}
+plot(audience_score ~ imdb_rating)
+cor(audience_score, imdb_rating)
+```
+So this looks like a promising candidate for prediction.
+
+imdb number of votes
+```{r}
+plot(audience_score ~ imdb_num_votes)
+cor(audience_score,imdb_num_votes)
+```
+This looks like it will have little predictive power.
+
+critics score
+```{r}
+plot(audience_score ~ critics_score)
+cor(audience_score, critics_score)
+```
+This might have some predictive power.
+
+best picture nominations
+```{r}
+boxplot(audience_score ~ best_pic_nom)
+```
+
+best picture wins
+```{r}
+boxplot(audience_score ~ best_pic_nom)
+```
+
+best actor wins
+```{r}
+boxplot(audience_score ~ best_actor_win)
+```
+
+best actress wins
+```{r}
+boxplot(audience_score ~ best_actress_win)
+```
+
+best director wins
+```{r}
+boxplot(audience_score ~ best_dir_win)
+```
+
+top 200 box office
+```{r}
+boxplot(audience_score ~ top200_box)
+```
+seems to be very slight correlation between top 200 and best picture nomination so it is probably fine to use both in the model
+```{r}
+
+```
+
 
 * * *
 
 ## Part 4: Modeling
 
-NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
-button above. Make sure that your code is visible in the project you submit. 
-Delete this note when before you submit your work.
+We will use the bas.lm function from the BAS package to look for the most likely models, using BIC (Bayesian Information Criteria) to trim select the most likely models.
+
+
+```{r}
+bestbic <- bas.lm(audience_score ~ feature_film + drama + runtime + mpaa_rating_R + thtr_rel_year + oscar_season + summer_season + imdb_rating + imdb_num_votes + critics_score + best_pic_nom + best_pic_win + best_actor_win + best_actress_win + best_dir_win + top200_box, data=movies, prior="BIC", modelprior=uniform())
+summary(bestbic)
+bestbic;
+
+```
+
+This output of this function shows the top 5 models, as well as the overall probability of being in a model for each variable.  Looking at bestbic, we can see that imdb_rating and critics_score have a high probability of being in the model (1 and .889 respectively), with runtime being the next closest at .47.  Just for curiosity, let us create a linear regression model with just those three variables and see how well it does.  Assuming the coefficients have normal prior distributions allows us to use R's lm() function.
+
+
+```{r}
+
+
+lm_rt_imdb_ct <- lm(audience_score ~ runtime + imdb_rating + critics_score, data=movies)
+lm_rt_imdb_ct
+```
+
+
+Now, we can put the movie variables into this equation (Audience score = -33.23 - .05362 * runtime + 14.98076 * imdb_rating + 0.0703 * critics_score) and predict the audience score.
+
+```{r}
+
+pred_rt_imdb_ct <- movies$runtime * -.05362 + movies$imdb_rating * 14.98 + movies$critics_score * .07 -33.28321
+hist(movies$audience_score - pred_rt_imdb_ct)
+mean(movies$audience_score - pred_rt_imdb_ct, na.rm=T)
+mean(movies$audience_score - pred_rt_imdb_ct, na.rm=T) * 100 / mean(movies$audience_score)
+
+```
+
+So the mean error of the prediction is about .026 or about .042%.
+
+
+Now let's look again at the output from the bas.lm() function, and do something similar to what was done in the lecture on Bayesian Model Averaging.  Instead of selecting just three variables, let's use all the variables, but with the values multiplied by the corresponding values of P(B != 0 | Y).  First, let us create a separate version of movies, converting each yes/no variable into a numeric variable (it is easier to multiply .2 times 1 than .2 times "yes").  As before, using normal conjugate priors allows us to use the lm() function in R to find the regression model.
+
+
+```{r}
+
+movies$ff <- as.numeric(movies$feature_film == 'yes')
+movies$drama_bin <- as.numeric(movies$drama == 'yes')
+movies$R_bin <- as.numeric(movies$mpaa_rating_R == 'yes')
+movies$oscar_bin <- as.numeric(movies$oscar_season == 'yes')
+movies$summer_bin <- as.numeric(movies$summer_season == 'yes')
+movies$best_pic_nom_bin <- as.numeric(movies$best_pic_nom == 'yes')
+movies$best_pic_win_bin <- as.numeric(movies$best_pic_win == 'yes')
+movies$best_actor_win_bin <- as.numeric(movies$best_actor_win == 'yes')
+movies$best_actress_win_bin <- as.numeric(movies$best_actress_win == 'yes')
+movies$best_dir_win_bin <- as.numeric(movies$best_dir_win == 'yes')
+movies$top200_box_bin <- as.numeric(movies$top200_box == 'yes')
+
+
+movievars <- data.frame(movies$audience_score, movies$ff * .065 , movies$drama_bin * .0432 , movies$runtime * .47 , movies$R_bin * .2 , movies$thtr_rel_year * .09 , movies$oscar_bin * .075 , movies$summer_bin * .08 , movies$imdb_rating , movies$imdb_num_votes * .058 , movies$critics_score * .89 , movies$best_pic_nom_bin * .131 , movies$best_pic_win_bin * .039 , movies$best_actor_win_bin * .144 , movies$best_actress_win_bin * .141 , movies$best_dir_win_bin * .067 , movies$top200_box_bin * .048)
+
+names(movievars) <- c('audience_score', 'ff', 'drama_bin', 'runtime', 'R_bin', 'thtr_rel_year', 'oscar_bin', 'summer_bin', 'imdb_rating', 'imdb_num_votes', 'critics_score', 'best_pic_nom_bin', 'best_pic_win_bin', 'best_actor_win_bin', 'best_actress_win_bin', 'best_dir_win_bin', 'top200_box_bin')
+
+lmAll <- lm(audience_score ~ ., data=movievars)
+lmAll
+
+```
+
+So above is the prediction model that uses all the variables, but each scaled according to the probability of showing up in the models found by bas.lm().  To make predictions, we can simply use the coefficients given in the above linear regression.
+
+```{r}
+predAll <- 1.244e+02 + (-3.459e+01) * movievars$ff + 2.992e+01 * movievars$drama_bin + (-1.194e-01) * movievars$runtime + (-7.222) * movievars$R_bin + (-8.508e-01) * movievars$thtr_rel_year + (-7.110) * movievars$oscar_bin + 1.138e+01 * movievars$summer_bin + (1.472e+01) * movievars$imdb_rating + (1.247e-04) * movievars$imdb_num_votes + (6.459e-02) * movievars$critics_score + (4.061e+01) * movievars$best_pic_nom_bin + (-8.235e+01) * movievars$best_pic_win_bin + (-1.072e+01) * movievars$best_actor_win_bin + (-1.559e+01) * movievars$best_actress_win_bin + (-1.838e+01) * movievars$best_dir_win_bin + (1.766e+01) * movievars$top200_box_bin
+
+```
+
+So having created a prediction for audience score, let's see how accurate it is.
+
+```{r}
+hist(predAll)
+hist(movies$audience_score - predAll)
+mean(movies$audience_score - predAll, na.rm=T)
+mean(movies$audience_score - predAll, na.rm=T) * 100 / mean(movies$audience_score)
+
+
+```
+
+So the mean error from the earlier prediction was about .026, but this one is even lower - approximately -0.00085, about 0.0014%.
+
 
 * * *
 
 ## Part 5: Prediction
 
-NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
-button above. Make sure that your code is visible in the project you submit. 
-Delete this note when before you submit your work.
+What movies came out in 2016?  How should I know?
+Rogue One?
+
 
 * * *
 
 ## Part 6: Conclusion
 
+We used the BAS package to determine prediction models for audience score, and found that creating a linear just the three variables that show up in most of the models (imdb_rating, critics_score, and runtime), gave predictions with a mean error of .026, or about .042%.  Then, we created a model using all of the variables, multiplying the value of each by it's probability of being in one of the models computed, and found a linear model from that scaled data. This model had a mean error of -0.00085, a difference of about .0014%.
